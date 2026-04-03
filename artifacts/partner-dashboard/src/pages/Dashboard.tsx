@@ -124,7 +124,7 @@ export default function Dashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-foreground">
-                피자설기 <span className="text-blue-400">런칭 올인</span> 플랜
+                마시떡 피자설기 <span className="text-blue-400">온라인 런칭</span> 플랜
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 {isPartnerMode

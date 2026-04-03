@@ -39,7 +39,7 @@ export default function AIAssistantSection({ onAddTasks }: AIAssistantSectionPro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           input: input.trim(),
-          context: "피자설기 런칭 마케팅 프로젝트",
+          context: "마시떡 피자설기 온라인 런칭 플랜 마케팅 프로젝트",
         }),
       });
 

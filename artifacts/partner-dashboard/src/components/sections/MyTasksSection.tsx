@@ -192,7 +192,7 @@ export default function MyTasksSection({ tasks, onToggle, onAdd, onEdit, onDelet
       <div className="rounded-2xl border border-white/10 bg-card/50 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-bold text-foreground">피자설기 런칭 올인 플랜</h2>
+            <h2 className="text-lg font-bold text-foreground">마시떡 피자설기 온라인 런칭 플랜</h2>
             <p className="text-xs text-muted-foreground mt-0.5">전체 진행률</p>
           </div>
           <div className="text-right">
