@@ -233,17 +233,14 @@ export default function Dashboard() {
         )}
 
         {activeTab === "resources" && (
-          <div>
-            <div className="mb-6">
-              <h2 className="text-lg font-bold text-foreground">Resources</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">구글 드라이브 실시간 링크</p>
-            </div>
-            <ResourcesSection
-              driveLinks={dashboard.state.driveLinks}
-              onUpdateUrl={dashboard.updateDriveLink}
-              isPartner={isPartnerMode}
-            />
-          </div>
+          <ResourcesSection
+            driveLinks={dashboard.state.driveLinks}
+            onUpdateUrl={dashboard.updateDriveLink}
+            onUpdateLabel={dashboard.updateDriveLinkLabel}
+            onAdd={dashboard.addDriveLink}
+            onDelete={dashboard.deleteDriveLink}
+            isPartner={isPartnerMode}
+          />
         )}
 
         {activeTab === "log" && (

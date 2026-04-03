@@ -105,6 +105,22 @@ export function useDashboard() {
     }));
   }, [setState]);
 
+  const updateDriveLinkLabel = useCallback((id: string, label: string) => {
+    setState((s) => ({
+      ...s,
+      driveLinks: s.driveLinks.map((d) => (d.id === id ? { ...d, label } : d)),
+    }));
+  }, [setState]);
+
+  const addDriveLink = useCallback((label: string, url: string) => {
+    const newLink: DriveLink = { id: generateId(), label, url };
+    setState((s) => ({ ...s, driveLinks: [...s.driveLinks, newLink] }));
+  }, [setState]);
+
+  const deleteDriveLink = useCallback((id: string) => {
+    setState((s) => ({ ...s, driveLinks: s.driveLinks.filter((d) => d.id !== id) }));
+  }, [setState]);
+
   const addLog = useCallback((text: string) => {
     const entry: LogEntry = {
       id: generateId(),
@@ -142,6 +158,9 @@ export function useDashboard() {
     addPartnerTask,
     deletePartnerTask,
     updateDriveLink,
+    updateDriveLinkLabel,
+    addDriveLink,
+    deleteDriveLink,
     addLog,
     deleteLog,
   };
