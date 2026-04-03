@@ -147,7 +147,7 @@ export default function Dashboard() {
                 <p className={`text-2xl font-black ${dashboard.partnerProgress < 30 ? "text-red-400" : "text-amber-400"}`}>
                   {dashboard.partnerProgress}%
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">유월스 이행률</p>
+                <p className="text-xs text-muted-foreground mt-0.5">유얼스 이행률</p>
               </div>
             </div>
           </div>
@@ -218,7 +218,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-lg font-bold text-foreground">파트너 관리</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">유월스마케팅 강제 이행 관리</p>
+                <p className="text-xs text-muted-foreground mt-0.5">유얼스마케팅 강제 이행 관리</p>
               </div>
             </div>
             <PartnerManagementSection

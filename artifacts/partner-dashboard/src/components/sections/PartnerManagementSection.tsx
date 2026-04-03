@@ -178,7 +178,7 @@ export default function PartnerManagementSection({ partnerTasks, partnerProgress
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center gap-2">
                 <div className={`w-2.5 h-2.5 rounded-full ${warningCount > 0 ? "bg-red-500 animate-pulse" : "bg-amber-500"}`} />
-                <span className="text-sm font-medium text-foreground">외부업체(유월스) 이행률</span>
+                <span className="text-sm font-medium text-foreground">외부업체(유얼스) 이행률</span>
                 {warningCount > 0 && (
                   <span className="text-xs bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded-full">
                     미이행 {warningCount}건
