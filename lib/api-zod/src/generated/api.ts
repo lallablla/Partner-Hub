@@ -14,3 +14,29 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary Parse natural language input and extract tasks
+ */
+export const ParseTasksWithAIBody = zod.object({
+  input: zod.string().describe("Natural language description of tasks to do"),
+  context: zod
+    .string()
+    .optional()
+    .describe("Additional context about the project"),
+});
+
+export const ParseTasksWithAIResponse = zod.object({
+  tasks: zod.array(
+    zod.object({
+      title: zod.string(),
+      phase: zod.enum([
+        "1단계(인프라)",
+        "2단계(상세페이지)",
+        "3단계(마케팅)",
+        "기타",
+      ]),
+    }),
+  ),
+  message: zod.string(),
+});

@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: ai
+    description: AI task assistant operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /ai/parse-tasks:
+    post:
+      operationId: parseTasksWithAI
+      tags: [ai]
+      summary: Parse natural language input and extract tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParseTasksRequest"
+      responses:
+        "200":
+          description: Parsed tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParseTasksResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +59,44 @@ components:
           type: string
       required:
         - status
-
+    ParseTasksRequest:
+      type: object
+      properties:
+        input:
+          type: string
+          description: Natural language description of tasks to do
+        context:
+          type: string
+          description: Additional context about the project
+      required:
+        - input
+    ParsedTask:
+      type: object
+      properties:
+        title:
+          type: string
+        phase:
+          type: string
+          enum: ["1단계(인프라)", "2단계(상세페이지)", "3단계(마케팅)", "기타"]
+      required:
+        - title
+        - phase
+    ParseTasksResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParsedTask"
+        message:
+          type: string
+      required:
+        - tasks
+        - message
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

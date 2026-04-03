@@ -5,18 +5,26 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ApiError,
+  HealthStatus,
+  ParseTasksRequest,
+  ParseTasksResponse,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +107,89 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Parse natural language input and extract tasks
+ */
+export const getParseTasksWithAIUrl = () => {
+  return `/api/ai/parse-tasks`;
+};
+
+export const parseTasksWithAI = async (
+  parseTasksRequest: ParseTasksRequest,
+  options?: RequestInit,
+): Promise<ParseTasksResponse> => {
+  return customFetch<ParseTasksResponse>(getParseTasksWithAIUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(parseTasksRequest),
+  });
+};
+
+export const getParseTasksWithAIMutationOptions = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof parseTasksWithAI>>,
+    TError,
+    { data: BodyType<ParseTasksRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof parseTasksWithAI>>,
+  TError,
+  { data: BodyType<ParseTasksRequest> },
+  TContext
+> => {
+  const mutationKey = ["parseTasksWithAI"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof parseTasksWithAI>>,
+    { data: BodyType<ParseTasksRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return parseTasksWithAI(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ParseTasksWithAIMutationResult = NonNullable<
+  Awaited<ReturnType<typeof parseTasksWithAI>>
+>;
+export type ParseTasksWithAIMutationBody = BodyType<ParseTasksRequest>;
+export type ParseTasksWithAIMutationError = ErrorType<ApiError>;
+
+/**
+ * @summary Parse natural language input and extract tasks
+ */
+export const useParseTasksWithAI = <
+  TError = ErrorType<ApiError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof parseTasksWithAI>>,
+    TError,
+    { data: BodyType<ParseTasksRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof parseTasksWithAI>>,
+  TError,
+  { data: BodyType<ParseTasksRequest> },
+  TContext
+> => {
+  return useMutation(getParseTasksWithAIMutationOptions(options));
+};

@@ -6,4 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./apiError";
 export * from "./healthStatus";
+export * from "./parsedTask";
+export * from "./parsedTaskPhase";
+export * from "./parseTasksRequest";
+export * from "./parseTasksResponse";

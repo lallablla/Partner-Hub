@@ -8,3 +8,34 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface ParseTasksRequest {
+  /** Natural language description of tasks to do */
+  input: string;
+  /** Additional context about the project */
+  context?: string;
+}
+
+export type ParsedTaskPhase =
+  (typeof ParsedTaskPhase)[keyof typeof ParsedTaskPhase];
+
+export const ParsedTaskPhase = {
+  "1단계(인프라)": "1단계(인프라)",
+  "2단계(상세페이지)": "2단계(상세페이지)",
+  "3단계(마케팅)": "3단계(마케팅)",
+  기타: "기타",
+} as const;
+
+export interface ParsedTask {
+  title: string;
+  phase: ParsedTaskPhase;
+}
+
+export interface ParseTasksResponse {
+  tasks: ParsedTask[];
+  message: string;
+}
+
+export interface ApiError {
+  error: string;
+}
