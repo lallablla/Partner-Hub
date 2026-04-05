@@ -1,151 +1,252 @@
-import { useState, useCallback } from "react";
-import { loadState, saveState, generateId } from "../lib/storage";
-import type { DashboardState, Task, TaskPhase, PartnerTask, PartnerStatus, DriveLink, LogEntry, Comment } from "../types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+import type { DashboardState, TaskPhase, PartnerStatus } from "../types";
 
-function useLocalState<T>(key: string, init: T) {
-  void key;
-  return useState<T>(init);
+const QUERY_KEY = ["dashboard"];
+
+async function apiFetch(path: string, options?: RequestInit) {
+  const res = await fetch(`/api${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
 }
-void useLocalState;
+
+function genId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
 
 export function useDashboard() {
-  const [state, setStateRaw] = useState<DashboardState>(() => loadState());
+  const queryClient = useQueryClient();
 
-  const setState = useCallback((updater: (prev: DashboardState) => DashboardState) => {
-    setStateRaw((prev) => {
-      const next = updater(prev);
-      saveState(next);
-      return next;
-    });
-  }, []);
+  const { data: state, isLoading } = useQuery<DashboardState>({
+    queryKey: QUERY_KEY,
+    queryFn: () => apiFetch("/dashboard"),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
-  const toggleTask = useCallback((id: string) => {
-    setState((s) => ({
-      ...s,
-      tasks: s.tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-    }));
-  }, [setState]);
+  const invalidate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+  }, [queryClient]);
 
-  const addTask = useCallback((title: string, phase: TaskPhase) => {
-    const newTask: Task = {
-      id: generateId(),
-      title,
-      phase,
-      completed: false,
-      comments: [],
-    };
-    setState((s) => ({ ...s, tasks: [...s.tasks, newTask] }));
-  }, [setState]);
+  // optimistic update helper
+  const optimistic = useCallback(
+    (updater: (prev: DashboardState) => DashboardState) => {
+      queryClient.setQueryData<DashboardState>(QUERY_KEY, (prev) =>
+        prev ? updater(prev) : prev
+      );
+    },
+    [queryClient]
+  );
 
-  const addMultipleTasks = useCallback((newTasks: { title: string; phase: TaskPhase }[]) => {
-    const tasks: Task[] = newTasks.map((t) => ({
-      id: generateId(),
-      title: t.title,
-      phase: t.phase,
-      completed: false,
-      comments: [],
-    }));
-    setState((s) => ({ ...s, tasks: [...s.tasks, ...tasks] }));
-  }, [setState]);
+  const toggleTask = useCallback(
+    async (id: string) => {
+      const prev = queryClient.getQueryData<DashboardState>(QUERY_KEY);
+      const task = prev?.tasks.find((t) => t.id === id);
+      if (!task) return;
+      const completed = !task.completed;
+      optimistic((s) => ({
+        ...s,
+        tasks: s.tasks.map((t) => (t.id === id ? { ...t, completed } : t)),
+      }));
+      await apiFetch(`/dashboard/tasks/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ completed }),
+      });
+    },
+    [queryClient, optimistic]
+  );
 
-  const updateTask = useCallback((id: string, title: string, phase: TaskPhase) => {
-    setState((s) => ({
-      ...s,
-      tasks: s.tasks.map((t) => (t.id === id ? { ...t, title, phase } : t)),
-    }));
-  }, [setState]);
+  const addTask = useCallback(
+    async (title: string, phase: TaskPhase) => {
+      const tmpId = genId();
+      optimistic((s) => ({
+        ...s,
+        tasks: [...s.tasks, { id: tmpId, title, phase, completed: false, comments: [] }],
+      }));
+      await apiFetch("/dashboard/tasks", {
+        method: "POST",
+        body: JSON.stringify({ title, phase }),
+      });
+      invalidate();
+    },
+    [optimistic, invalidate]
+  );
 
-  const deleteTask = useCallback((id: string) => {
-    setState((s) => ({ ...s, tasks: s.tasks.filter((t) => t.id !== id) }));
-  }, [setState]);
+  const addMultipleTasks = useCallback(
+    async (newTasks: { title: string; phase: TaskPhase }[]) => {
+      for (const t of newTasks) {
+        await apiFetch("/dashboard/tasks", {
+          method: "POST",
+          body: JSON.stringify({ title: t.title, phase: t.phase }),
+        });
+      }
+      invalidate();
+    },
+    [invalidate]
+  );
 
-  const addComment = useCallback((taskId: string, text: string, author: "partner" | "boss") => {
-    const comment: Comment = {
-      id: generateId(),
-      author,
-      authorName: author === "partner" ? "나 (파트너)" : "마시떡 사장님",
-      text,
-      createdAt: new Date().toISOString(),
-    };
-    setState((s) => ({
-      ...s,
-      tasks: s.tasks.map((t) =>
-        t.id === taskId ? { ...t, comments: [...t.comments, comment] } : t
-      ),
-    }));
-  }, [setState]);
+  const updateTask = useCallback(
+    async (id: string, title: string, phase: TaskPhase) => {
+      optimistic((s) => ({
+        ...s,
+        tasks: s.tasks.map((t) => (t.id === id ? { ...t, title, phase } : t)),
+      }));
+      await apiFetch(`/dashboard/tasks/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ title, phase }),
+      });
+    },
+    [optimistic]
+  );
 
-  const updatePartnerTask = useCallback((id: string, updates: Partial<Pick<PartnerTask, "status" | "current" | "total" | "title">>) => {
-    setState((s) => ({
-      ...s,
-      partnerTasks: s.partnerTasks.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-    }));
-  }, [setState]);
+  const deleteTask = useCallback(
+    async (id: string) => {
+      optimistic((s) => ({ ...s, tasks: s.tasks.filter((t) => t.id !== id) }));
+      await apiFetch(`/dashboard/tasks/${id}`, { method: "DELETE" });
+    },
+    [optimistic]
+  );
 
-  const addPartnerTask = useCallback((title: string, total: number, unit: string) => {
-    const newTask: PartnerTask = {
-      id: generateId(),
-      title,
-      status: "지시완료",
-      current: 0,
-      total,
-      unit,
-    };
-    setState((s) => ({ ...s, partnerTasks: [...s.partnerTasks, newTask] }));
-  }, [setState]);
+  const addComment = useCallback(
+    async (taskId: string, text: string, author: "partner" | "boss") => {
+      const authorName = author === "partner" ? "나 (파트너)" : "마시떡 사장님";
+      const comment = await apiFetch(`/dashboard/tasks/${taskId}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ author, authorName, text }),
+      });
+      optimistic((s) => ({
+        ...s,
+        tasks: s.tasks.map((t) =>
+          t.id === taskId ? { ...t, comments: [...t.comments, comment] } : t
+        ),
+      }));
+    },
+    [optimistic]
+  );
 
-  const deletePartnerTask = useCallback((id: string) => {
-    setState((s) => ({ ...s, partnerTasks: s.partnerTasks.filter((p) => p.id !== id) }));
-  }, [setState]);
+  const updatePartnerTask = useCallback(
+    async (id: string, updates: Partial<Pick<{ status: PartnerStatus; current: number; total: number; title: string }, "status" | "current" | "total" | "title">>) => {
+      optimistic((s) => ({
+        ...s,
+        partnerTasks: s.partnerTasks.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+      }));
+      await apiFetch(`/dashboard/partner-tasks/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      });
+    },
+    [optimistic]
+  );
 
-  const updateDriveLink = useCallback((id: string, url: string) => {
-    setState((s) => ({
-      ...s,
-      driveLinks: s.driveLinks.map((d) => (d.id === id ? { ...d, url } : d)),
-    }));
-  }, [setState]);
+  const addPartnerTask = useCallback(
+    async (title: string, total: number, unit: string) => {
+      await apiFetch("/dashboard/partner-tasks", {
+        method: "POST",
+        body: JSON.stringify({ title, total, unit }),
+      });
+      invalidate();
+    },
+    [invalidate]
+  );
 
-  const updateDriveLinkLabel = useCallback((id: string, label: string) => {
-    setState((s) => ({
-      ...s,
-      driveLinks: s.driveLinks.map((d) => (d.id === id ? { ...d, label } : d)),
-    }));
-  }, [setState]);
+  const deletePartnerTask = useCallback(
+    async (id: string) => {
+      optimistic((s) => ({ ...s, partnerTasks: s.partnerTasks.filter((p) => p.id !== id) }));
+      await apiFetch(`/dashboard/partner-tasks/${id}`, { method: "DELETE" });
+    },
+    [optimistic]
+  );
 
-  const addDriveLink = useCallback((label: string, url: string) => {
-    const newLink: DriveLink = { id: generateId(), label, url };
-    setState((s) => ({ ...s, driveLinks: [...s.driveLinks, newLink] }));
-  }, [setState]);
+  const updateDriveLink = useCallback(
+    async (id: string, url: string) => {
+      optimistic((s) => ({
+        ...s,
+        driveLinks: s.driveLinks.map((d) => (d.id === id ? { ...d, url } : d)),
+      }));
+      await apiFetch(`/dashboard/drive-links/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ url }),
+      });
+    },
+    [optimistic]
+  );
 
-  const deleteDriveLink = useCallback((id: string) => {
-    setState((s) => ({ ...s, driveLinks: s.driveLinks.filter((d) => d.id !== id) }));
-  }, [setState]);
+  const updateDriveLinkLabel = useCallback(
+    async (id: string, label: string) => {
+      optimistic((s) => ({
+        ...s,
+        driveLinks: s.driveLinks.map((d) => (d.id === id ? { ...d, label } : d)),
+      }));
+      await apiFetch(`/dashboard/drive-links/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ label }),
+      });
+    },
+    [optimistic]
+  );
 
-  const addLog = useCallback((text: string) => {
-    const entry: LogEntry = {
-      id: generateId(),
-      text,
-      createdAt: new Date().toISOString(),
-    };
-    setState((s) => ({ ...s, logs: [entry, ...s.logs] }));
-  }, [setState]);
+  const addDriveLink = useCallback(
+    async (label: string, url: string) => {
+      await apiFetch("/dashboard/drive-links", {
+        method: "POST",
+        body: JSON.stringify({ label, url }),
+      });
+      invalidate();
+    },
+    [invalidate]
+  );
 
-  const deleteLog = useCallback((id: string) => {
-    setState((s) => ({ ...s, logs: s.logs.filter((l) => l.id !== id) }));
-  }, [setState]);
+  const deleteDriveLink = useCallback(
+    async (id: string) => {
+      optimistic((s) => ({ ...s, driveLinks: s.driveLinks.filter((d) => d.id !== id) }));
+      await apiFetch(`/dashboard/drive-links/${id}`, { method: "DELETE" });
+    },
+    [optimistic]
+  );
 
-  const myProgress = state.tasks.length > 0
-    ? Math.round((state.tasks.filter((t) => t.completed).length / state.tasks.length) * 100)
-    : 0;
+  const addLog = useCallback(
+    async (text: string) => {
+      const log = await apiFetch("/dashboard/logs", {
+        method: "POST",
+        body: JSON.stringify({ text }),
+      });
+      optimistic((s) => ({ ...s, logs: [log, ...s.logs] }));
+    },
+    [optimistic]
+  );
+
+  const deleteLog = useCallback(
+    async (id: string) => {
+      optimistic((s) => ({ ...s, logs: s.logs.filter((l) => l.id !== id) }));
+      await apiFetch(`/dashboard/logs/${id}`, { method: "DELETE" });
+    },
+    [optimistic]
+  );
+
+  const emptyState: DashboardState = { tasks: [], partnerTasks: [], driveLinks: [], logs: [] };
+  const resolvedState = state ?? emptyState;
+
+  const myProgress =
+    resolvedState.tasks.length > 0
+      ? Math.round(
+          (resolvedState.tasks.filter((t) => t.completed).length /
+            resolvedState.tasks.length) *
+            100
+        )
+      : 0;
 
   const partnerProgress = (() => {
-    const totalItems = state.partnerTasks.reduce((a, p) => a + p.total, 0);
-    const doneItems = state.partnerTasks.reduce((a, p) => a + p.current, 0);
+    const totalItems = resolvedState.partnerTasks.reduce((a, p) => a + p.total, 0);
+    const doneItems = resolvedState.partnerTasks.reduce((a, p) => a + p.current, 0);
     return totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
   })();
 
   return {
-    state,
+    state: resolvedState,
+    isLoading,
     myProgress,
     partnerProgress,
     toggleTask,
