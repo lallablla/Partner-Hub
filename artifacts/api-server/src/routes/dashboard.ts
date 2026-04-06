@@ -74,10 +74,89 @@ async function seedIfEmpty() {
   ]);
 }
 
+// ─── One-time dev→prod data migration ────────────────────────────────────────
+let migrationDone = false;
+async function migrateDevData() {
+  if (migrationDone) return;
+  migrationDone = true;
+
+  try {
+    // 1. Insert / update all custom tasks added in dev (not in default seed)
+    const customTasks = [
+      { id: "1775436586979-p4qk8to", title: "유얼스에 연락해 그간 집행내역 제출 요청(배포된 각각의 세부url요청)", phase: "1단계(인프라)", completed: true, sortOrder: 1 },
+      { id: "1775436587214-22fc6fk", title: "유얼스에 '남은 마케팅 잔액을 피자설기 신제품 런칭에 소진'할 계획임을 통지(메시지 발송/업무협약을위한 메일주소요청/영업일1일내회신없을경우 전화연락및통지예정)", phase: "1단계(인프라)", completed: true, sortOrder: 2 },
+      { id: "1775437964417-doibijz", title: "공유 구글드라이브 마시떡 폴더 내 파일및폴더 업무별 정리", phase: "1단계(인프라)", completed: true, sortOrder: 3 },
+      { id: "1775436587635-omwffkx", title: "유얼스로부터 받은 자료 수신 확인 및 파일 정리·공유 드라이브 업로드(폴더 구조/권한 설정)", phase: "1단계(인프라)", completed: false, sortOrder: 15 },
+      { id: "1775436587839-c30sc5n", title: "유얼스로부터 자료 미제출 시 3영업일 내 재요청 및 담당자(연락 담당자) 지정", phase: "1단계(인프라)", completed: false, sortOrder: 16 },
+      { id: "1775436587418-qqo9rpt", title: "피자설기 런칭용 잔액 사용 가이드 작성(예산 배분안·승인흐름·집행 일정·KPI 기대치 포함)", phase: "3단계(마케팅)", completed: false, sortOrder: 39 },
+      { id: "1775436588043-2unjfsa", title: "예산 시스템에 남은 잔액 반영 및 피자설기 런칭 예산으로 배분 내역 업데이트(회계/보고용)", phase: "3단계(마케팅)", completed: false, sortOrder: 40 },
+    ];
+    for (const t of customTasks) {
+      await db.insert(dashboardTasks).values(t).onConflictDoUpdate({
+        target: dashboardTasks.id,
+        set: { title: t.title, phase: t.phase, completed: t.completed, sortOrder: t.sortOrder },
+      });
+    }
+
+    // 2. Update seeded task titles & sort orders to match dev
+    const seededUpdates: { id: string; title: string; sortOrder: number }[] = [
+      { id: "t-i10", title: "경쟁사·시장 분석 (수제떡 카테고리 벤치마킹)", sortOrder: 4 },
+      { id: "t-i05", title: "콜드체인 자체 배송 프로세스 정리 (냉장박스·아이스팩·택배사 수수료검토)", sortOrder: 5 },
+      { id: "t-i06", title: "배송 안내·주의사항 페이지 제작", sortOrder: 6 },
+      { id: "t-i01", title: "스마트스토어 전시중지 상품 복구·정비", sortOrder: 7 },
+      { id: "t-i02", title: "스마트스토어 키워드 SEO 최적화 (피자설기)", sortOrder: 8 },
+      { id: "t-i03", title: "쿠팡 마켓플레이스 입점 수수료 검토, 마케팅비용 등 예측", sortOrder: 9 },
+      { id: "t-i04", title: "쿠팡 초기 상품 등록 (피자설기 포함)", sortOrder: 10 },
+      { id: "t-i07", title: "인스타그램 피드 톤앤매너 정립·리뉴얼", sortOrder: 11 },
+      { id: "t-i08", title: "유튜브 채널 개설 및 기본 정보 세팅", sortOrder: 12 },
+      { id: "t-i09", title: "틱톡 채널 개설 및 기본 정보 세팅", sortOrder: 13 },
+      { id: "t-i11", title: "월간 콘텐츠 캘린더 1차 작성 (라방 일정 포함)", sortOrder: 14 },
+      { id: "t-d01", title: "피자설기 촬영 기획 (콘셉트·소품·배경 구성)", sortOrder: 17 },
+      { id: "t-d02", title: "피자설기 제품 촬영 진행", sortOrder: 18 },
+      { id: "t-d03", title: "촬영 사진 편집·보정 (보정 10컷 이상)", sortOrder: 19 },
+      { id: "t-d04", title: "메인 카피 작성 (헤드카피·서브카피·설명문)", sortOrder: 20 },
+      { id: "t-d05", title: "스마트스토어 상세페이지 디자인 제작", sortOrder: 21 },
+      { id: "t-d06", title: "쿠팡 상세페이지 디자인 제작", sortOrder: 22 },
+      { id: "t-d07", title: "썸네일 이미지 제작 (플랫폼별 규격 맞춤)", sortOrder: 23 },
+      { id: "t-d08", title: "배송 안내·냉장 보관 안내 이미지 제작", sortOrder: 24 },
+      { id: "t-d09", title: "스마트스토어 상품 업로드 완료", sortOrder: 25 },
+      { id: "t-d10", title: "쿠팡 상품 업로드 완료", sortOrder: 26 },
+      { id: "t-m01", title: "인스타그램 피자설기 첫 피드 게시 (사진+카피+해시태그)", sortOrder: 27 },
+      { id: "t-m02", title: "인스타그램 릴스 제작·업로드 (피자설기 비주얼 영상)", sortOrder: 28 },
+      { id: "t-m03", title: "인스타 라이브 1회 시범 운영 (방송 세팅·첫 팬 소통)", sortOrder: 29 },
+      { id: "t-m04", title: "인스타 라방 사전 홍보 콘텐츠 제작 (D-3 예고 스토리·피드)", sortOrder: 30 },
+      { id: "t-m05", title: "틱톡 쇼츠 콘텐츠 제작·업로드 (트렌드 편집)", sortOrder: 31 },
+      { id: "t-m06", title: "유튜브 쇼츠 업로드 (라방 클립 재편집 포함)", sortOrder: 32 },
+      { id: "t-m07", title: "메타(인스타) 소액 광고 1차 테스트 집행", sortOrder: 33 },
+      { id: "t-m08", title: "쿠팡 광고 소액 1차 테스트 집행", sortOrder: 34 },
+      { id: "t-m09", title: "스마트스토어·쿠팡 구매 리뷰 30개+ 달성 목표 관리", sortOrder: 35 },
+      { id: "t-m10", title: "체험단 30명 모집·발송·리뷰 확인", sortOrder: 36 },
+      { id: "t-m11", title: "고객 문의·리뷰 모니터링 및 대응 (매일)", sortOrder: 37 },
+      { id: "t-m12", title: "1차 성과 리포트 발행 (매출·방문자·팔로워·라방 성과 종합)", sortOrder: 38 },
+    ];
+    for (const u of seededUpdates) {
+      await db.update(dashboardTasks).set({ title: u.title, sortOrder: u.sortOrder }).where(eq(dashboardTasks.id, u.id));
+    }
+
+    // 3. Add missing drive link from dev
+    await db.insert(dashboardDriveLinks).values({
+      id: "1775438579828-ihzzw3l",
+      label: "현재까지의 마시떡 현황 분석(폴더있는 자료만참고했을때 기준)",
+      url: "https://drive.google.com/drive/folders/1eeldYwfDL5WyOVgXDh81bbm9PXJm4G0N",
+      sortOrder: 4,
+    }).onConflictDoNothing();
+
+    logger.info("migrateDevData: completed");
+  } catch (err) {
+    logger.error({ err }, "migrateDevData: error");
+  }
+}
+
 // ─── GET /api/dashboard ────────────────────────────────────────────────────
 router.get("/dashboard", async (_req, res) => {
   try {
     await seedIfEmpty();
+    await migrateDevData();
 
     const [tasks, comments, partnerTasks, driveLinks, logs] = await Promise.all([
       db.select().from(dashboardTasks).orderBy(asc(dashboardTasks.sortOrder), asc(dashboardTasks.createdAt)),
