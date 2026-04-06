@@ -108,41 +108,43 @@ function NoteCard({ note, isPartner, onUpdate, onDelete }: NoteCardProps) {
         </div>
 
         {!isPartner && (
-          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          <div className="flex flex-row sm:flex-col gap-1 shrink-0">
             <button
               onClick={() => onUpdate(note.id, { pinned: !note.pinned })}
               title={note.pinned ? "고정 해제" : "상단 고정"}
-              className={`p-1.5 rounded-lg transition-all ${note.pinned ? "text-amber-400 hover:bg-amber-500/15" : "text-muted-foreground hover:text-amber-400 hover:bg-white/8"}`}
+              className={`p-2 rounded-xl transition-all ${note.pinned ? "text-amber-400 bg-amber-500/15" : "text-muted-foreground hover:text-amber-400 hover:bg-white/8"}`}
             >
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
               </svg>
             </button>
             <button
               onClick={() => setEditing(true)}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-400 hover:bg-white/8 transition-all"
+              className="p-2 rounded-xl text-muted-foreground hover:text-blue-400 hover:bg-white/8 transition-all"
+              title="수정"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </button>
             {confirmDelete ? (
               <button
                 onClick={() => { onDelete(note.id); setConfirmDelete(false); }}
-                className="p-1.5 rounded-lg text-red-400 bg-red-500/15 transition-all"
+                className="p-2 rounded-xl text-red-400 bg-red-500/15 transition-all"
                 title="삭제 확인"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </button>
             ) : (
               <button
                 onClick={() => setConfirmDelete(true)}
-                onBlur={() => setConfirmDelete(false)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-white/8 transition-all"
+                onBlur={() => setTimeout(() => setConfirmDelete(false), 200)}
+                className="p-2 rounded-xl text-muted-foreground hover:text-red-400 hover:bg-white/8 transition-all"
+                title="삭제"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
