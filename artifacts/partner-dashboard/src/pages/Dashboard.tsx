@@ -274,7 +274,10 @@ export default function Dashboard() {
               <h2 className="text-lg font-bold text-foreground">AI 업무 보조</h2>
               <p className="text-xs text-muted-foreground mt-0.5">자연어로 업무를 입력하면 AI가 자동으로 정리합니다</p>
             </div>
-            <AIAssistantSection onAddTasks={dashboard.addMultipleTasks} />
+            <AIAssistantSection
+              onAddTasks={dashboard.addMultipleTasks}
+              onAddPartnerTask={dashboard.addPartnerTask}
+            />
           </div>
         )}
       </main>
