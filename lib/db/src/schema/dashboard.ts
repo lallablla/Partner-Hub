@@ -40,3 +40,14 @@ export const dashboardLogs = pgTable("dashboard_logs", {
   text: text("text").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const dashboardSales = pgTable("dashboard_sales", {
+  id: text("id").primaryKey(),
+  date: text("date").notNull().unique(),
+  naverGross: integer("naver_gross").notNull().default(0),
+  naverRefund: integer("naver_refund").notNull().default(0),
+  coupangGross: integer("coupang_gross").notNull().default(0),
+  coupangRefund: integer("coupang_refund").notNull().default(0),
+  memo: text("memo").notNull().default(""),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
