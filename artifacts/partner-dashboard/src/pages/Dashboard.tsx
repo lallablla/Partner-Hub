@@ -4,10 +4,9 @@ import type { TaskPhase } from "../types";
 import MyTasksSection from "../components/sections/MyTasksSection";
 import PartnerManagementSection from "../components/sections/PartnerManagementSection";
 import ResourcesSection from "../components/sections/ResourcesSection";
-import DailyLogSection from "../components/sections/DailyLogSection";
 import AIAssistantSection from "../components/sections/AIAssistantSection";
 
-type Tab = "tasks" | "partner" | "resources" | "log" | "ai";
+type Tab = "tasks" | "partner" | "resources" | "ai";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
@@ -34,15 +33,6 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-      </svg>
-    ),
-  },
-  {
-    id: "log",
-    label: "Daily Log",
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
   },
@@ -181,11 +171,6 @@ export default function Dashboard() {
               >
                 {tab.icon}
                 {tab.label}
-                {tab.id === "log" && dashboard.state.logs.length > 0 && (
-                  <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded-full">
-                    {dashboard.state.logs.length}
-                  </span>
-                )}
                 {tab.id === "partner" && dashboard.state.partnerTasks.filter(t => t.status === "미이행(경고)").length > 0 && (
                   <span className="text-xs bg-red-500 px-1.5 py-0.5 rounded-full animate-pulse">
                     {dashboard.state.partnerTasks.filter(t => t.status === "미이행(경고)").length}
@@ -252,20 +237,6 @@ export default function Dashboard() {
             onDelete={dashboard.deleteDriveLink}
             isPartner={isPartnerMode}
           />
-        )}
-
-        {activeTab === "log" && (
-          <div>
-            <div className="mb-6">
-              <h2 className="text-lg font-bold text-foreground">Daily Log</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">업무 히스토리 기록</p>
-            </div>
-            <DailyLogSection
-              logs={dashboard.state.logs}
-              onAdd={dashboard.addLog}
-              onDelete={dashboard.deleteLog}
-            />
-          </div>
         )}
 
         {activeTab === "ai" && !isPartnerMode && (
