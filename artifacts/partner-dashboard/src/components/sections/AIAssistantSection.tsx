@@ -138,7 +138,7 @@ export default function AIAssistantSection({ onAddTasks, onAddPartnerTask }: AIA
           <div>
             <p className="text-sm font-semibold text-blue-300">AI 업무 보조</p>
             <p className="text-xs text-muted-foreground mt-1">
-              업무를 자유롭게 입력하면 AI가 <span className="text-blue-300">내 업무(My Task)</span>와 <span className="text-amber-300">유얼스 지시 업무(파트너 관리)</span>로 자동 분류합니다.
+              업무를 자유롭게 입력하면 AI가 <span className="text-blue-300">직접 진행할 업무(My Task)</span>와 <span className="text-amber-300">파트너와 협업할 업무(파트너 관리)</span>로 자동 분류합니다.
             </p>
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function AIAssistantSection({ onAddTasks, onAddPartnerTask }: AIA
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleParse(); }}
-          placeholder={`예시:\n"유얼스한테 맘카페 바이럴 30건 올려달라고 하고, 체험단 20명 모집 요청하기. 나는 인스타 릴스 만들고 쿠팡 광고 세팅하기"`}
+          placeholder={`예시:\n"이번 주 인스타 릴스 촬영 콘셉트 기획, 스마트스토어 상세페이지 최종 검토, 쿠팡 광고 1차 테스트 세팅. 블로그 홍보 원고 30건 발행 일정 협의, 체험단 신청자 명단 공유 및 진행 현황 확인 필요"`}
           rows={4}
           className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-blue-500/50 focus:bg-white/8 transition-all resize-none"
         />
@@ -236,7 +236,7 @@ export default function AIAssistantSection({ onAddTasks, onAddPartnerTask }: AIA
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span className="text-sm font-semibold text-amber-300">파트너 관리 ({partnerTasks.length}개)</span>
-                <span className="text-xs text-muted-foreground">유얼스에 지시할 업무</span>
+                <span className="text-xs text-muted-foreground">파트너와 협의할 업무</span>
               </div>
               {partnerTasks.map((task, i) => (
                 <label
