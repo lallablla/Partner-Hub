@@ -1,5 +1,14 @@
 import { pgTable, text, boolean, integer, timestamp } from "drizzle-orm/pg-core";
 
+export const meetingNotes = pgTable("meeting_notes", {
+  id: text("id").primaryKey(),
+  date: text("date").notNull(),
+  title: text("title").notNull().default(""),
+  content: text("content").notNull(),
+  pinned: boolean("pinned").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const dashboardTasks = pgTable("dashboard_tasks", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),

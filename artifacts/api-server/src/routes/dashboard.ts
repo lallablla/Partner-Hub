@@ -6,6 +6,7 @@ import {
   dashboardPartnerTasks,
   dashboardDriveLinks,
   dashboardLogs,
+  meetingNotes,
 } from "@workspace/db/schema";
 import { eq, asc, desc } from "drizzle-orm";
 import { logger } from "../lib/logger";
@@ -328,6 +329,52 @@ router.delete("/dashboard/drive-links/:id", async (req, res) => {
   } catch (err) {
     logger.error({ err }, "Error deleting drive link");
     res.status(500).json({ error: "Failed to delete drive link" });
+  }
+});
+
+// ─── Meeting Notes ──────────────────────────────────────────────────────────
+router.get("/dashboard/notes", async (_req, res) => {
+  try {
+    const notes = await db.select().from(meetingNotes).orderBy(desc(meetingNotes.date), desc(meetingNotes.createdAt));
+    res.json(notes.map((n) => ({ ...n, createdAt: n.createdAt.toISOString() })));
+  } catch (err) {
+    logger.error({ err }, "Error fetching notes");
+    res.status(500).json({ error: "Failed to fetch notes" });
+  }
+});
+
+router.post("/dashboard/notes", async (req, res) => {
+  try {
+    const { date, title, content } = req.body as { date: string; title: string; content: string };
+    const id = genId();
+    const [note] = await db.insert(meetingNotes).values({ id, date, title: title ?? "", content }).returning();
+    res.json({ ...note!, createdAt: note!.createdAt.toISOString() });
+  } catch (err) {
+    logger.error({ err }, "Error adding note");
+    res.status(500).json({ error: "Failed to add note" });
+  }
+});
+
+router.patch("/dashboard/notes/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fields = req.body as { date?: string; title?: string; content?: string; pinned?: boolean };
+    const [note] = await db.update(meetingNotes).set(fields).where(eq(meetingNotes.id, id!)).returning();
+    res.json({ ...note!, createdAt: note!.createdAt.toISOString() });
+  } catch (err) {
+    logger.error({ err }, "Error updating note");
+    res.status(500).json({ error: "Failed to update note" });
+  }
+});
+
+router.delete("/dashboard/notes/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.delete(meetingNotes).where(eq(meetingNotes.id, id!));
+    res.json({ ok: true });
+  } catch (err) {
+    logger.error({ err }, "Error deleting note");
+    res.status(500).json({ error: "Failed to delete note" });
   }
 });
 
