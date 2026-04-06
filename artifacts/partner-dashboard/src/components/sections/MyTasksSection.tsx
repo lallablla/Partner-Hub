@@ -1,4 +1,19 @@
 import { useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { Task, TaskPhase } from "../../types";
 import ProgressBar from "../ProgressBar";
 
@@ -22,7 +37,22 @@ interface TaskItemProps {
 function TaskItem({ task, onToggle, onEdit, onDelete, onAddComment, isPartner }: TaskItemProps) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const colors = PHASE_COLORS[task.phase];
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
 
   const handleAddComment = () => {
     if (!commentText.trim()) return;
@@ -31,12 +61,30 @@ function TaskItem({ task, onToggle, onEdit, onDelete, onAddComment, isPartner }:
   };
 
   return (
-    <div className={`group relative rounded-xl border transition-all duration-200 ${
-      task.completed
-        ? "border-white/5 bg-white/2 opacity-60"
-        : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8"
-    }`}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group relative rounded-xl border transition-all duration-200 ${
+        task.completed
+          ? "border-white/5 bg-white/2 opacity-60"
+          : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8"
+      } ${isDragging ? "shadow-2xl ring-1 ring-blue-500/40" : ""}`}
+    >
       <div className="flex items-start gap-3 p-4">
+        {/* Drag handle */}
+        {!isPartner && (
+          <button
+            {...attributes}
+            {...listeners}
+            className="flex-shrink-0 mt-0.5 p-0.5 cursor-grab active:cursor-grabbing text-white/20 hover:text-white/50 transition-colors touch-none"
+            title="드래그로 순서 변경"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+            </svg>
+          </button>
+        )}
+
         <button
           onClick={() => onToggle(task.id)}
           className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center ${
@@ -143,17 +191,22 @@ interface MyTasksSectionProps {
   onEdit: (id: string, title: string, phase: TaskPhase) => void;
   onDelete: (id: string) => void;
   onAddComment: (taskId: string, text: string) => void;
+  onReorder: (orderedIds: string[]) => void;
   isPartner: boolean;
   progress: number;
 }
 
-export default function MyTasksSection({ tasks, onToggle, onAdd, onEdit, onDelete, onAddComment, isPartner, progress }: MyTasksSectionProps) {
+export default function MyTasksSection({ tasks, onToggle, onAdd, onEdit, onDelete, onAddComment, onReorder, isPartner, progress }: MyTasksSectionProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newPhase, setNewPhase] = useState<TaskPhase>("1단계(인프라)");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editPhase, setEditPhase] = useState<TaskPhase>("1단계(인프라)");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
   const handleAdd = () => {
     if (!newTitle.trim()) return;
@@ -182,8 +235,20 @@ export default function MyTasksSection({ tasks, onToggle, onAdd, onEdit, onDelet
     total: tasks.filter((t) => t.phase === phase).length,
   }));
 
-  const commentHandler = (taskId: string, text: string) => {
-    onAddComment(taskId, text);
+  const handleDragEnd = (event: DragEndEvent, phaseTasks: Task[]) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = phaseTasks.findIndex((t) => t.id === active.id);
+    const newIndex = phaseTasks.findIndex((t) => t.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(phaseTasks, oldIndex, newIndex);
+
+    // Build full ordered IDs: replace the slice for this phase, keep others
+    const otherTasks = tasks.filter((t) => t.phase !== phaseTasks[0]?.phase);
+    const allOrdered = [...reordered, ...otherTasks].map((t) => t.id);
+    onReorder(allOrdered);
   };
 
   return (
@@ -202,7 +267,6 @@ export default function MyTasksSection({ tasks, onToggle, onAdd, onEdit, onDelet
         </div>
         <ProgressBar value={progress} color="bg-gradient-to-r from-blue-600 to-blue-400" height="h-3" />
 
-        {/* Phase mini progress */}
         <div className="grid grid-cols-3 gap-3 mt-4">
           {phaseGroups.map((g) => (
             <div key={g.phase} className="rounded-xl border border-white/8 bg-white/3 p-3">
@@ -221,7 +285,7 @@ export default function MyTasksSection({ tasks, onToggle, onAdd, onEdit, onDelet
         </div>
       </div>
 
-      {/* Task groups */}
+      {/* Task groups with DnD */}
       {phaseGroups.map((g) => (
         <div key={g.phase} className="space-y-2">
           <div className="flex items-center gap-2">
@@ -229,20 +293,31 @@ export default function MyTasksSection({ tasks, onToggle, onAdd, onEdit, onDelet
               {g.phase}
             </span>
             <span className="text-xs text-muted-foreground">{g.completed}/{g.total}</span>
+            {!isPartner && g.tasks.length > 1 && (
+              <span className="text-xs text-white/20 ml-1">↕ 드래그로 순서 변경</span>
+            )}
           </div>
-          <div className="space-y-2 pl-1">
-            {g.tasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onToggle={onToggle}
-                onEdit={handleEditStart}
-                onDelete={onDelete}
-                onAddComment={commentHandler}
-                isPartner={isPartner}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={(e) => handleDragEnd(e, g.tasks)}
+          >
+            <SortableContext items={g.tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2 pl-1">
+                {g.tasks.map((task) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    onToggle={onToggle}
+                    onEdit={handleEditStart}
+                    onDelete={onDelete}
+                    onAddComment={onAddComment}
+                    isPartner={isPartner}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       ))}
 

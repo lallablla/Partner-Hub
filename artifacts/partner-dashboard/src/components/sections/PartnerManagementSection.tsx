@@ -1,4 +1,19 @@
 import { useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { PartnerTask, PartnerStatus } from "../../types";
 import ProgressBar from "../ProgressBar";
 
@@ -41,6 +56,22 @@ function PartnerTaskCard({ task, onUpdate, onDelete }: PartnerTaskCardProps) {
   const status = STATUS_CONFIG[task.status];
   const pct = task.total > 0 ? Math.round((task.current / task.total) * 100) : 0;
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
   const handleSaveCurrent = () => {
     const val = parseInt(tempCurrent, 10);
     if (!isNaN(val) && val >= 0 && val <= task.total) {
@@ -50,14 +81,30 @@ function PartnerTaskCard({ task, onUpdate, onDelete }: PartnerTaskCardProps) {
   };
 
   return (
-    <div className={`rounded-2xl border p-5 space-y-4 transition-all duration-200 ${
-      task.status === "미이행(경고)"
-        ? "border-red-500/30 bg-red-500/5 glow-red"
-        : task.status === "이행중"
-        ? "border-amber-500/20 bg-amber-500/3"
-        : "border-white/10 bg-white/3"
-    }`}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-2xl border p-5 space-y-4 transition-all duration-200 ${
+        task.status === "미이행(경고)"
+          ? "border-red-500/30 bg-red-500/5"
+          : task.status === "이행중"
+          ? "border-amber-500/20 bg-amber-500/3"
+          : "border-white/10 bg-white/3"
+      } ${isDragging ? "shadow-2xl ring-1 ring-amber-500/40" : ""}`}
+    >
       <div className="flex items-start justify-between gap-3">
+        {/* Drag handle */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="flex-shrink-0 mt-0.5 p-0.5 cursor-grab active:cursor-grabbing text-white/20 hover:text-white/50 transition-colors touch-none"
+          title="드래그로 순서 변경"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+          </svg>
+        </button>
+
         <div className="flex-1">
           <p className="text-sm font-semibold text-foreground">{task.title}</p>
           <div className="flex items-center gap-2 mt-2">
@@ -140,13 +187,18 @@ interface PartnerManagementSectionProps {
   onUpdate: (id: string, updates: Partial<Pick<PartnerTask, "status" | "current" | "total" | "title">>) => void;
   onAdd: (title: string, total: number, unit: string) => void;
   onDelete: (id: string) => void;
+  onReorder: (orderedIds: string[]) => void;
 }
 
-export default function PartnerManagementSection({ partnerTasks, partnerProgress, myProgress, onUpdate, onAdd, onDelete }: PartnerManagementSectionProps) {
+export default function PartnerManagementSection({ partnerTasks, partnerProgress, myProgress, onUpdate, onAdd, onDelete, onReorder }: PartnerManagementSectionProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newTotal, setNewTotal] = useState("10");
   const [newUnit, setNewUnit] = useState("개");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
   const handleAdd = () => {
     if (!newTitle.trim() || !newTotal) return;
@@ -154,6 +206,18 @@ export default function PartnerManagementSection({ partnerTasks, partnerProgress
     setNewTitle("");
     setNewTotal("10");
     setShowAddForm(false);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = partnerTasks.findIndex((t) => t.id === active.id);
+    const newIndex = partnerTasks.findIndex((t) => t.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(partnerTasks, oldIndex, newIndex);
+    onReorder(reordered.map((t) => t.id));
   };
 
   const warningCount = partnerTasks.filter(t => t.status === "미이행(경고)").length;
@@ -204,12 +268,20 @@ export default function PartnerManagementSection({ partnerTasks, partnerProgress
         )}
       </div>
 
-      {/* Partner tasks */}
-      <div className="space-y-3">
-        {partnerTasks.map((task) => (
-          <PartnerTaskCard key={task.id} task={task} onUpdate={onUpdate} onDelete={onDelete} />
-        ))}
-      </div>
+      {/* Partner tasks with DnD */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={partnerTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {partnerTasks.map((task) => (
+              <PartnerTaskCard key={task.id} task={task} onUpdate={onUpdate} onDelete={onDelete} />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Add form */}
       {showAddForm ? (

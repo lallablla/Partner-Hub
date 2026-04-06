@@ -162,6 +162,21 @@ router.delete("/dashboard/tasks/:id", async (req, res) => {
   }
 });
 
+router.post("/dashboard/tasks/reorder", async (req, res) => {
+  try {
+    const { orderedIds } = req.body as { orderedIds: string[] };
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        db.update(dashboardTasks).set({ sortOrder: index + 1 }).where(eq(dashboardTasks.id, id))
+      )
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    logger.error({ err }, "Error reordering tasks");
+    res.status(500).json({ error: "Failed to reorder tasks" });
+  }
+});
+
 // ─── Task Comments ──────────────────────────────────────────────────────────
 router.post("/dashboard/tasks/:taskId/comments", async (req, res) => {
   try {
@@ -222,6 +237,21 @@ router.delete("/dashboard/partner-tasks/:id", async (req, res) => {
   } catch (err) {
     logger.error({ err }, "Error deleting partner task");
     res.status(500).json({ error: "Failed to delete partner task" });
+  }
+});
+
+router.post("/dashboard/partner-tasks/reorder", async (req, res) => {
+  try {
+    const { orderedIds } = req.body as { orderedIds: string[] };
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        db.update(dashboardPartnerTasks).set({ sortOrder: index + 1 }).where(eq(dashboardPartnerTasks.id, id))
+      )
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    logger.error({ err }, "Error reordering partner tasks");
+    res.status(500).json({ error: "Failed to reorder partner tasks" });
   }
 });
 

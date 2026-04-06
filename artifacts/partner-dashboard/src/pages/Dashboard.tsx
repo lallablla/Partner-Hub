@@ -203,6 +203,7 @@ export default function Dashboard() {
               onAddComment={(taskId: string, text: string) =>
                 dashboard.addComment(taskId, text, isPartnerMode ? "boss" : "partner")
               }
+              onReorder={dashboard.reorderTasks}
               isPartner={isPartnerMode}
               progress={dashboard.myProgress}
             />
@@ -224,6 +225,7 @@ export default function Dashboard() {
               onUpdate={dashboard.updatePartnerTask}
               onAdd={dashboard.addPartnerTask}
               onDelete={dashboard.deletePartnerTask}
+              onReorder={dashboard.reorderPartnerTasks}
             />
           </div>
         )}

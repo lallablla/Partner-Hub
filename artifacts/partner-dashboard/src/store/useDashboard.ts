@@ -207,6 +207,37 @@ export function useDashboard() {
     [optimistic]
   );
 
+  const reorderTasks = useCallback(
+    async (orderedIds: string[]) => {
+      optimistic((s) => {
+        const idToTask = Object.fromEntries(s.tasks.map((t) => [t.id, t]));
+        const reordered = orderedIds.map((id) => idToTask[id]).filter(Boolean) as typeof s.tasks;
+        const rest = s.tasks.filter((t) => !orderedIds.includes(t.id));
+        return { ...s, tasks: [...reordered, ...rest] };
+      });
+      await apiFetch("/dashboard/tasks/reorder", {
+        method: "POST",
+        body: JSON.stringify({ orderedIds }),
+      });
+    },
+    [optimistic]
+  );
+
+  const reorderPartnerTasks = useCallback(
+    async (orderedIds: string[]) => {
+      optimistic((s) => {
+        const idToTask = Object.fromEntries(s.partnerTasks.map((t) => [t.id, t]));
+        const reordered = orderedIds.map((id) => idToTask[id]).filter(Boolean) as typeof s.partnerTasks;
+        return { ...s, partnerTasks: reordered };
+      });
+      await apiFetch("/dashboard/partner-tasks/reorder", {
+        method: "POST",
+        body: JSON.stringify({ orderedIds }),
+      });
+    },
+    [optimistic]
+  );
+
   const addLog = useCallback(
     async (text: string) => {
       const log = await apiFetch("/dashboard/logs", {
@@ -264,5 +295,7 @@ export function useDashboard() {
     deleteDriveLink,
     addLog,
     deleteLog,
+    reorderTasks,
+    reorderPartnerTasks,
   };
 }
