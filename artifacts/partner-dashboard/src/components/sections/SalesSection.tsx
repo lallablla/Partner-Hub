@@ -86,12 +86,18 @@ export default function SalesSection() {
   return (
     <div className="space-y-6">
       {/* Today header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-foreground">오늘의 순매출 현황</h2>
           <p className="text-xs text-muted-foreground mt-0.5">{todayLabel} · 클릭해서 금액 수정</p>
+          <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+            <svg className="w-3 h-3 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-xs text-blue-300">정산 기준: 플랫폼 정산 시 찍히는 <strong>'결제 완료'</strong> 총액 기준</span>
+          </div>
         </div>
-        <div className="text-right">
+        <div className="text-right flex-shrink-0">
           <p className="text-xs text-muted-foreground">오늘 합계 순매출</p>
           <p className={`text-3xl font-black tabular-nums ${today.totalNet >= 0 ? "text-emerald-400" : "text-red-400"}`}>
             {formatKRW(today.totalNet)}
@@ -118,7 +124,7 @@ export default function SalesSection() {
               />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">취소·환불</span>
+              <span className="text-xs text-muted-foreground">취소반품</span>
               <EditableAmount
                 value={today.naverRefund}
                 onSave={(v) => updateToday({ naverRefund: v })}
@@ -126,7 +132,7 @@ export default function SalesSection() {
               />
             </div>
             <div className="border-t border-white/8 pt-3 flex items-center justify-between">
-              <span className="text-xs font-semibold text-green-300">순매출</span>
+              <span className="text-xs font-semibold text-green-300">순매출 <span className="font-normal text-white/30">(주문−취소반품)</span></span>
               <span className={`text-xl font-black font-mono tabular-nums ${today.naverNet >= 0 ? "text-green-400" : "text-red-400"}`}>
                 {formatKRW(today.naverNet)}
               </span>
@@ -159,7 +165,7 @@ export default function SalesSection() {
               />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">취소·환불</span>
+              <span className="text-xs text-muted-foreground">취소반품</span>
               <EditableAmount
                 value={today.coupangRefund}
                 onSave={(v) => updateToday({ coupangRefund: v })}
@@ -167,7 +173,7 @@ export default function SalesSection() {
               />
             </div>
             <div className="border-t border-white/8 pt-3 flex items-center justify-between">
-              <span className="text-xs font-semibold text-orange-300">순매출</span>
+              <span className="text-xs font-semibold text-orange-300">순매출 <span className="font-normal text-white/30">(주문−취소반품)</span></span>
               <span className={`text-xl font-black font-mono tabular-nums ${today.coupangNet >= 0 ? "text-orange-400" : "text-red-400"}`}>
                 {formatKRW(today.coupangNet)}
               </span>
