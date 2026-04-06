@@ -227,13 +227,20 @@ export default function MyTasksSection({ tasks, onToggle, onAdd, onEdit, onDelet
     setEditingTask(null);
   };
 
-  const phaseGroups = PHASES.map((phase) => ({
-    phase,
-    tasks: tasks.filter((t) => t.phase === phase),
-    colors: PHASE_COLORS[phase],
-    completed: tasks.filter((t) => t.phase === phase && t.completed).length,
-    total: tasks.filter((t) => t.phase === phase).length,
-  }));
+  const phaseGroups = PHASES.map((phase) => {
+    const phaseTasks = tasks.filter((t) => t.phase === phase);
+    const sorted = [
+      ...phaseTasks.filter((t) => t.completed),
+      ...phaseTasks.filter((t) => !t.completed),
+    ];
+    return {
+      phase,
+      tasks: sorted,
+      colors: PHASE_COLORS[phase],
+      completed: phaseTasks.filter((t) => t.completed).length,
+      total: phaseTasks.length,
+    };
+  });
 
   const handleDragEnd = (event: DragEndEvent, phaseTasks: Task[]) => {
     const { active, over } = event;
