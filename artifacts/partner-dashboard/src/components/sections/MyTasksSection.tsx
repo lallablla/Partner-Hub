@@ -167,8 +167,11 @@ function TaskItem({ task, onToggle, onEdit, onDelete, onAddComment, isPartner }:
               type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleAddComment(); }}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) handleAddComment(); }}
               placeholder="댓글 입력..."
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
               className="flex-1 text-xs bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:border-blue-500/50 focus:bg-white/8"
             />
             <button
@@ -337,9 +340,12 @@ export default function MyTasksSection({ tasks, onToggle, onAdd, onEdit, onDelet
                 type="text"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) handleAdd(); }}
                 placeholder="새 업무 입력..."
                 autoFocus
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
                 className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-blue-500/50"
               />
               <select
@@ -381,9 +387,12 @@ export default function MyTasksSection({ tasks, onToggle, onAdd, onEdit, onDelet
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleEditSave(); }}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) handleEditSave(); }}
               className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-blue-500/50"
               autoFocus
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
             <select
               value={editPhase}

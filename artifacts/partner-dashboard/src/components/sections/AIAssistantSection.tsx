@@ -149,9 +149,12 @@ export default function AIAssistantSection({ onAddTasks, onAddPartnerTask }: AIA
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleParse(); }}
+          onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !e.nativeEvent.isComposing) handleParse(); }}
           placeholder={`예시:\n"이번 주 인스타 릴스 촬영 콘셉트 기획, 스마트스토어 상세페이지 최종 검토, 쿠팡 광고 1차 테스트 세팅. 블로그 홍보 원고 30건 발행 일정 협의, 체험단 신청자 명단 공유 및 진행 현황 확인 필요"`}
           rows={4}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
           className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-blue-500/50 focus:bg-white/8 transition-all resize-none"
         />
         <button

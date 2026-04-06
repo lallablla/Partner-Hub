@@ -292,6 +292,9 @@ export default function PartnerManagementSection({ partnerTasks, partnerProgress
             onChange={(e) => setNewTitle(e.target.value)}
             placeholder="업무 지시 내용..."
             autoFocus
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-amber-500/50"
           />
           <div className="flex gap-2">
