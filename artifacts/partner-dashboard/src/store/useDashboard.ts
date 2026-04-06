@@ -25,6 +25,7 @@ export function useDashboard() {
     queryFn: () => apiFetch("/dashboard"),
     staleTime: 0,
     refetchOnWindowFocus: true,
+    refetchInterval: 15000,
   });
 
   const invalidate = useCallback(() => {

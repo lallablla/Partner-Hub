@@ -37,6 +37,7 @@ export function useSales() {
     queryFn: () => apiFetch("/sales/today"),
     staleTime: 0,
     refetchOnWindowFocus: true,
+    refetchInterval: 15000,
   });
 
   const updateToday = useCallback(
