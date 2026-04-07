@@ -183,14 +183,13 @@ function PartnerTaskCard({ task, onUpdate, onDelete }: PartnerTaskCardProps) {
 interface PartnerManagementSectionProps {
   partnerTasks: PartnerTask[];
   partnerProgress: number;
-  myProgress: number;
   onUpdate: (id: string, updates: Partial<Pick<PartnerTask, "status" | "current" | "total" | "title">>) => void;
   onAdd: (title: string, total: number, unit: string) => void;
   onDelete: (id: string) => void;
   onReorder: (orderedIds: string[]) => void;
 }
 
-export default function PartnerManagementSection({ partnerTasks, partnerProgress, myProgress, onUpdate, onAdd, onDelete, onReorder }: PartnerManagementSectionProps) {
+export default function PartnerManagementSection({ partnerTasks, partnerProgress, onUpdate, onAdd, onDelete, onReorder }: PartnerManagementSectionProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newTotal, setNewTotal] = useState("10");
@@ -224,48 +223,26 @@ export default function PartnerManagementSection({ partnerTasks, partnerProgress
 
   return (
     <div className="space-y-5">
-      {/* Comparison banner */}
+      {/* Partner progress summary */}
       <div className="rounded-2xl border border-white/10 bg-card/50 p-5">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">파트너 이행률 비교</h3>
-        <div className="space-y-4">
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <span className="text-sm font-medium text-foreground">나의 업무 진행률</span>
-              </div>
-              <span className="text-xl font-black text-blue-400">{myProgress}%</span>
-            </div>
-            <ProgressBar value={myProgress} color="bg-blue-500" height="h-2.5" />
-          </div>
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2">
-                <div className={`w-2.5 h-2.5 rounded-full ${warningCount > 0 ? "bg-red-500 animate-pulse" : "bg-amber-500"}`} />
-                <span className="text-sm font-medium text-foreground">외부업체(유얼스) 이행률</span>
-                {warningCount > 0 && (
-                  <span className="text-xs bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded-full">
-                    미이행 {warningCount}건
-                  </span>
-                )}
-              </div>
-              <span className={`text-xl font-black ${partnerProgress < 30 ? "text-red-400" : partnerProgress < 60 ? "text-amber-400" : "text-emerald-400"}`}>
-                {partnerProgress}%
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground">유얼스마케팅 이행 현황</h3>
+            {warningCount > 0 && (
+              <span className="text-xs bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded-full animate-pulse">
+                미이행 {warningCount}건
               </span>
-            </div>
-            <ProgressBar
-              value={partnerProgress}
-              color={partnerProgress < 30 ? "bg-red-500" : partnerProgress < 60 ? "bg-amber-500" : "bg-emerald-500"}
-              height="h-2.5"
-            />
+            )}
           </div>
+          <span className={`text-2xl font-black ${partnerProgress < 30 ? "text-red-400" : partnerProgress < 60 ? "text-amber-400" : "text-emerald-400"}`}>
+            {partnerProgress}%
+          </span>
         </div>
-
-        {myProgress > partnerProgress && (
-          <div className="mt-4 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-300">
-            파트너 대비 <strong>{myProgress - partnerProgress}%p</strong> 앞서 진행 중입니다.
-          </div>
-        )}
+        <ProgressBar
+          value={partnerProgress}
+          color={partnerProgress < 30 ? "bg-red-500" : partnerProgress < 60 ? "bg-amber-500" : "bg-emerald-500"}
+          height="h-2.5"
+        />
       </div>
 
       {/* Partner tasks with DnD */}

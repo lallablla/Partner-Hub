@@ -241,7 +241,6 @@ export default function Dashboard() {
             <PartnerManagementSection
               partnerTasks={dashboard.state.partnerTasks}
               partnerProgress={dashboard.partnerProgress}
-              myProgress={dashboard.myProgress}
               onUpdate={dashboard.updatePartnerTask}
               onAdd={dashboard.addPartnerTask}
               onDelete={dashboard.deletePartnerTask}
